@@ -17,7 +17,7 @@ function PurchaseAnimation({
           <Image src={image} alt={name} style={{ width: "4rem" }} />
         </div>
         <div className="purchaseAnimation__moving-text">
-          Purchasing {amount} NFTs
+          Purchasing {amount} Chests
           <span className="purchaseAnimation__dot">.</span>
           <span
             className="purchaseAnimation__dot"

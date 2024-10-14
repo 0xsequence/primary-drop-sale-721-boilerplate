@@ -79,6 +79,7 @@ export const getCollectionBalance = async (
     includeMetadata: args.includeMetadata ?? true,
     metadataOptions: {
       verifiedOnly: args.verifiedOnly ?? true,
+      includeContracts: [args.contractAddress],
     },
   });
 

@@ -4,18 +4,25 @@ import { useContractInfo } from "../hooks/data";
 import { SALES_CONTRACT_ABI } from "../../utils/primarySales/abis/salesContractAbi";
 import { UnpackedSaleConfigurationProps } from "../../utils/primarySales/helpers";
 
+interface SaleDetailsProps {
+  paymentToken: string;
+}
+
 export const useSalesCurrency = (
   saleConfiguration: UnpackedSaleConfigurationProps,
 ) => {
-  const { data: paymentTokenData, isLoading: paymentTokenIsLoading } =
+  const {
+    data: saleDetails,
+    isLoading: paymentTokenIsLoading,
+  }: { data: SaleDetailsProps | undefined; isLoading: boolean } =
     useReadContract({
       abi: SALES_CONTRACT_ABI,
-      functionName: "paymentToken",
+      functionName: "saleDetails",
       chainId: saleConfiguration.chainId,
       address: saleConfiguration.salesContractAddress,
     });
 
-  const paymentTokenAddress = (paymentTokenData as string) || "";
+  const paymentTokenAddress = (saleDetails?.paymentToken as string) || "";
 
   const {
     data: currencyContractInfoData,

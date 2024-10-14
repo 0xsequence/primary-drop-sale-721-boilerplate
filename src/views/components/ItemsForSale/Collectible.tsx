@@ -1,32 +1,23 @@
 import {
   Box,
   Card,
+  Image,
   Skeleton,
   Text,
   useMediaQuery,
 } from "@0xsequence/design-system";
-import CollectibleTileImage from "../CollectibleTileImage";
 import { BuyWithCryptoCardButton } from "./BuyWithCryptoCardButton";
 import { useEffect, useState } from "react";
-import { ContractInfo, TokenMetadata } from "@0xsequence/indexer";
+import { ContractInfo } from "@0xsequence/indexer";
 import { toast } from "react-toastify";
-import { SendTransactionErrorType } from "viem";
-import NftsMintedProgressBar from "../NftsMintedProgressBar";
-import { NFT_TOKEN_CONTRACT_ABI } from "../../../utils/primarySales/abis/nftTokenContractAbi";
-import { useReadContract } from "wagmi";
 import PurchaseAnimation from "../blockchain/Connected/PurchaseAnimation";
 import { formatPriceWithDecimals } from "../../../utils/primarySales/helpers";
 import { UnpackedSaleConfigurationProps } from "../../../utils/primarySales/helpers";
+import { SendTransactionErrorType } from "viem";
 
 interface CollectibleProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  collectibleBalance: { [key: string]: any } | undefined;
-  tokenMetadata: TokenMetadata;
   chainId: number;
   currencyData: ContractInfo | undefined;
-  totalMintedNftsPercentaje: number;
-  totalSupply: string | 0;
-  totalNftsMinted: string | undefined;
   userPaymentCurrencyBalance: bigint | undefined;
   price: bigint;
   currencyDecimals: number | undefined;
@@ -35,23 +26,9 @@ interface CollectibleProps {
   refetchTotalMinted: () => void;
 }
 
-function calculateMintedPercentage(minted: number, totalMax: number): number {
-  if (totalMax <= 0) {
-    return 0;
-  }
-
-  const percentage = (minted / totalMax) * 100;
-  return Math.floor(percentage);
-}
-
 export const Collectible = ({
-  collectibleBalance,
-  tokenMetadata,
   chainId,
   currencyData,
-  totalMintedNftsPercentaje,
-  totalSupply,
-  totalNftsMinted,
   userPaymentCurrencyBalance,
   price,
   currencyDecimals,
@@ -64,20 +41,19 @@ export const Collectible = ({
   const [txExplorerUrl, setTxExplorerUrl] = useState("");
   const [txError, setTxError] = useState<SendTransactionErrorType | null>(null);
   const [purchasingNft, setPurchasingNft] = useState<boolean>(false);
-  const logoURI = currencyData?.logoURI;
-  const {
-    data: nftsMinted,
-    // isLoading: nftsMintedIsLoading,
-    refetch: refetchNftsMinted,
-  } = useReadContract({
-    abi: NFT_TOKEN_CONTRACT_ABI,
-    functionName: "tokenSupply",
-    chainId: chainId,
-    address: saleConfiguration.nftTokenAddress,
-    args: [BigInt(tokenMetadata?.tokenId)],
-  });
+  // const logoURI = currencyData?.logoURI;
 
-  const amountOwned: string = collectibleBalance?.balance || "0";
+  const formmatedPrice = currencyDecimals
+    ? formatPriceWithDecimals(price, currencyDecimals)
+    : 0;
+
+  useEffect(() => {
+    if (!txError || JSON.stringify(txError) === "{}") return;
+    toast(`Error to purchase NFT`, { type: "error" });
+    setPurchasingNft(false);
+    console.error(txError);
+  }, [txError]);
+
   const increaseAmount = () => {
     if (purchasingNft) return;
     setAmount(amount + 1);
@@ -92,22 +68,6 @@ export const Collectible = ({
     setAmount(0);
   };
 
-  const mintedNftPercentaje = calculateMintedPercentage(
-    Number(nftsMinted),
-    Number(totalSupply),
-  );
-
-  const formmatedPrice = currencyDecimals
-    ? formatPriceWithDecimals(price, currencyDecimals)
-    : 0;
-
-  useEffect(() => {
-    if (!txError || JSON.stringify(txError) === "{}") return;
-    toast(`Error to purchase NFT`, { type: "error" });
-    setPurchasingNft(false);
-    console.error(txError);
-  }, [txError]);
-
   return (
     <Box
       padding="1"
@@ -121,57 +81,55 @@ export const Collectible = ({
     >
       <Card>
         <Box flexDirection="row" gap="6">
-          <CollectibleTileImage imageUrl={tokenMetadata?.image || ""} />
-          <Box display="flex" flexDirection="column" gap="6">
-            <Text variant="large" fontWeight="bold" color="text100">
-              {tokenMetadata?.name || ""}
-            </Text>
-            <Text
-              variant="normal"
-              fontWeight="bold"
-              color="text100"
-              style={{ textAlign: "left" }}
+          <Box
+            display="flex"
+            flexDirection="column"
+            gap="6"
+            alignItems="center"
+          >
+            <Box
+              display="flex"
+              flexDirection="column"
+              marginBottom="6"
+              gap="4"
+              style={{ width: "450px" }}
             >
-              Token id: {tokenMetadata?.tokenId || ""}
-            </Text>
-            <NftsMintedProgressBar
-              totalMintedNftsPercentaje={totalMintedNftsPercentaje}
-              mintedNftsPercentaje={mintedNftPercentaje}
-              tokenId={tokenMetadata?.tokenId || ""}
-              mintedNftCount={Number(nftsMinted)}
-              totalMintedNfts={Number(totalNftsMinted)}
-              totalSupply={Number(totalSupply)}
-            />
-            <Box display="flex" justifyContent="space-between" gap="4">
-              <Box flexDirection="row" gap="2">
-                <Text
-                  variant="normal"
-                  fontWeight="bold"
-                  color="text100"
-                  style={{ textAlign: "left" }}
-                >
-                  Price: {formmatedPrice}
-                </Text>
-                {!logoURI ? (
-                  <Skeleton style={{ width: 20, height: 20 }} />
-                ) : (
-                  // <TokenImage
-                  //   // src="https://metadata.sequence.app/projects/30957/collections/690/image.png"
-                  //   withNetwork="amoy"
-                  //   symbol="matic"
-                  //   style={{ width: 20, height: 20 }}
-                  // />
-                  <></>
-                )}
-              </Box>
-              <Text
-                variant="normal"
-                fontWeight="bold"
-                color="text100"
-                style={{ textAlign: "left" }}
-              >
-                Amount Owned: {amountOwned}
+              <Text variant="large" fontWeight="bold" color="text100">
+                Buy Now and Test Your Luck
               </Text>
+              <Text variant="normal" fontWeight="medium">
+                In just a few days, all chests will be revealed. Good luck!
+              </Text>
+            </Box>
+            <Box
+              display="flex"
+              flexDirection="row"
+              gap="6"
+              justifyContent="center"
+            >
+              <Image
+                src="/chest.png"
+                style={{ width: "298px", borderRadius: "12px" }}
+              />
+            </Box>
+
+            <Box display="flex" flexDirection="row" gap="6">
+              <Box display="flex" flexDirection="column" gap="4">
+                <Box display="flex" justifyContent="space-between" gap="4">
+                  <Box flexDirection="row" gap="2" style={{ width: "298px" }}>
+                    <Text
+                      variant="normal"
+                      fontWeight="bold"
+                      color="text100"
+                      style={{ textAlign: "left" }}
+                    >
+                      Price: {formmatedPrice}
+                    </Text>
+
+                    <Skeleton style={{ width: 20, height: 20 }} />
+                  </Box>
+                </Box>
+              </Box>
             </Box>
             <Box
               display="flex"
@@ -227,7 +185,7 @@ export const Collectible = ({
                 amount={amount}
                 chainId={chainId}
                 collectionAddress={saleConfiguration.nftTokenAddress}
-                tokenId={tokenMetadata.tokenId}
+                // tokenId={tokenMetadata.tokenId}
                 resetAmount={resetAmount}
                 setTxExplorerUrl={setTxExplorerUrl}
                 setTxError={setTxError}
@@ -237,14 +195,14 @@ export const Collectible = ({
                 currencyData={currencyData}
                 refetchCollectionBalance={refetchCollectionBalance}
                 refetchTotalMinted={refetchTotalMinted}
-                refetchNftsMinted={refetchNftsMinted}
+                // refetchNftsMinted={refetchNftsMinted}
               />
             </Box>
             {purchasingNft && (
               <PurchaseAnimation
                 amount={amount}
-                image={tokenMetadata.image || ""}
-                name={tokenMetadata.name}
+                image="/chest.png"
+                name="Chest"
               />
             )}
             {txError && JSON.stringify(txError) != "{}" && (
@@ -253,7 +211,7 @@ export const Collectible = ({
             {txExplorerUrl && (
               <Box display="flex" flexDirection="column" marginBottom="3">
                 <Text variant="large" color="text100">
-                  Purchase Completed Succesfully
+                  Purchase Completed Successfully
                 </Text>
                 <a
                   href={txExplorerUrl}

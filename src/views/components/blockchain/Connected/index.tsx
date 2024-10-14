@@ -12,7 +12,7 @@ import { Hex } from "viem";
 import { useAccount, useDisconnect, useReadContract } from "wagmi";
 
 import { ItemsForSale } from "../../ItemsForSale";
-import { useContractInfo } from "../../../hooks/data";
+import { useCollectionBalance, useContractInfo } from "../../../hooks/data";
 import { useSalesCurrency } from "../../../hooks/useSalesCurrency";
 import { getChain } from "../../../../ERC20/getChain";
 import SwitchNetwork from "./SwitchNetwork";
@@ -50,6 +50,7 @@ const Connected = () => {
     () => getSaleConfiguration(chainId),
     [chainId],
   );
+  const isMobile = useMediaQuery("isMobile");
   const { data: contractInfoData, isLoading: contractInfoIsLoading } =
     useContractInfo(
       saleConfiguration.chainId,
@@ -63,7 +64,7 @@ const Connected = () => {
     isLoading: tokenSaleDetailsDataIsLoading,
   } = useReadContract({
     abi: SALES_CONTRACT_ABI,
-    functionName: "globalSaleDetails",
+    functionName: "saleDetails",
     chainId: chainId,
     address: saleConfiguration.salesContractAddress,
   });
@@ -97,6 +98,20 @@ const Connected = () => {
     chainId: chainId,
     address: saleConfiguration.nftTokenAddress,
   });
+
+  const {
+    data: collectionBalanceData,
+    isLoading: collectionBalanceIsLoading,
+    // refetch: refetchCollectionBalance,
+  } = useCollectionBalance({
+    accountAddress: userAddress || "",
+    contractAddress: saleConfiguration.nftTokenAddress,
+    chainId: saleConfiguration.chainId,
+    includeMetadata: true,
+    verifiedOnly: true,
+  });
+
+  console.log(collectionBalanceData, "userCositas");
 
   const AddressDisplay = ({
     label,
@@ -323,12 +338,114 @@ const Connected = () => {
             />
           </Collapsible>
         )}
+      {userAddress && !collectionBalanceIsLoading && collectionBalanceData && (
+        <Collapsible label="User inventory">
+          <Box
+            display="flex"
+            flexWrap="wrap"
+            gap="6"
+            justifyContent={
+              collectionBalanceData?.length < 3 ? "flex-start" : "center"
+            }
+          >
+            {collectionBalanceData?.map((balanceData) => {
+              const { name, description, image, tokenId } =
+                balanceData?.tokenMetadata ?? {};
+
+              return (
+                <Box
+                  padding="1"
+                  width="full"
+                  flexDirection="column"
+                  style={{
+                    flexBasis: isMobile ? "100%" : "50%",
+                    width: "fit-content",
+                    maxWidth: "30.125rem",
+                  }}
+                >
+                  <Card>
+                    <Box flexDirection="row" gap="6">
+                      <Box
+                        display="flex"
+                        flexDirection="column"
+                        gap="6"
+                        alignItems="center"
+                      >
+                        <Box
+                          display="flex"
+                          flexDirection="column"
+                          marginBottom="6"
+                          gap="4"
+                          style={{ width: "450px" }}
+                        >
+                          <Text
+                            variant="large"
+                            fontWeight="bold"
+                            color="text100"
+                          >
+                            {name}
+                          </Text>
+                          <Text variant="normal" fontWeight="medium">
+                            {description}
+                          </Text>
+                        </Box>
+                        <Box
+                          display="flex"
+                          flexDirection="row"
+                          gap="6"
+                          justifyContent="center"
+                        >
+                          <Image
+                            src={image}
+                            style={{ width: "298px", borderRadius: "12px" }}
+                          />
+                        </Box>
+
+                        <Box display="flex" flexDirection="row" gap="6">
+                          <Box display="flex" flexDirection="column" gap="4">
+                            <Box
+                              display="flex"
+                              justifyContent="space-between"
+                              gap="4"
+                            >
+                              <Box
+                                flexDirection="row"
+                                justifyContent="space-between"
+                                gap="2"
+                                style={{ width: "298px" }}
+                              >
+                                <Text
+                                  variant="normal"
+                                  fontWeight="bold"
+                                  color="text100"
+                                  style={{ textAlign: "left" }}
+                                >
+                                  Token ID: {tokenId || "No metadata"}
+                                </Text>
+                                <Text
+                                  variant="normal"
+                                  fontWeight="bold"
+                                  color="text100"
+                                  style={{ textAlign: "left" }}
+                                >
+                                  Amount: {balanceData?.balance || "0"}
+                                </Text>
+                              </Box>
+                            </Box>
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Card>
+                </Box>
+              );
+            })}
+          </Box>
+        </Collapsible>
+      )}
+      
       <ItemsForSale
         chainId={saleConfiguration.chainId}
-        collectionAddress={saleConfiguration.nftTokenAddress}
-        totalMinted={formattedNftsMinted}
-        totalSupply={totalSupply}
-        totalMintedNftsPercentaje={totalMintedNftsPercentaje}
         userPaymentCurrencyBalance={userPaymentCurrencyBalance}
         price={price}
         currencyDecimals={currencyDecimals}
@@ -337,7 +454,6 @@ const Connected = () => {
         saleConfiguration={saleConfiguration}
         refetchTotalMinted={refetchTotalMinted}
       />
-
       <Button label="Disconnect" onClick={disconnect} />
     </Card>
   );

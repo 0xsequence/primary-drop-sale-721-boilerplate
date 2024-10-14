@@ -3,9 +3,7 @@ import {
   usePublicClient,
   useWalletClient,
   useAccount,
-  // useReadContract,
   useSendTransaction,
-  // useSwitchChain,
 } from "wagmi";
 import { ERC20 } from "../../../ERC20/ERC20";
 
@@ -17,7 +15,7 @@ import { toast } from "react-toastify";
 import { ContractInfo } from "@0xsequence/indexer";
 
 interface BuyWithCryptoCardButtonProps {
-  tokenId: string;
+  // tokenId: string;
   collectionAddress: string;
   chainId: number;
   amount: number;
@@ -30,11 +28,11 @@ interface BuyWithCryptoCardButtonProps {
   currencyData: ContractInfo | undefined;
   refetchCollectionBalance: () => void;
   refetchTotalMinted: () => void;
-  refetchNftsMinted: () => void;
+  // refetchNftsMinted: () => void;
 }
 
 export const BuyWithCryptoCardButton = ({
-  tokenId,
+  // tokenId,
   // collectionAddress,
   chainId,
   amount,
@@ -47,7 +45,7 @@ export const BuyWithCryptoCardButton = ({
   currencyData,
   refetchCollectionBalance,
   refetchTotalMinted,
-  refetchNftsMinted,
+  // refetchNftsMinted,
 }: BuyWithCryptoCardButtonProps) => {
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
@@ -82,20 +80,6 @@ export const BuyWithCryptoCardButton = ({
       return;
     }
 
-    /**
-     * Mint tokens.
-     * @param to Address to mint tokens to.
-     * @param tokenIds Token IDs to mint.
-     * @param amounts Amounts of tokens to mint.
-     * @param data Data to pass if receiver is contract.
-     * @param expectedPaymentToken ERC20 token address to accept payment in. address(0) indicates ETH.
-     * @param maxTotal Maximum amount of payment tokens.
-     * @param proof Merkle proof for allowlist minting.
-     * @notice Sale must be active for all tokens.
-     * @dev tokenIds must be sorted ascending without duplicates.
-     * @dev An empty proof is supplied when no proof is required.
-     */
-
     setTxError(null);
     setTxExplorerUrl("");
     setPurchasingNft(true);
@@ -113,19 +97,27 @@ export const BuyWithCryptoCardButton = ({
         saleConfiguration.salesContractAddress,
         walletClient,
       );
-    }
+    }   
+
+    /**
+     * Mint tokens.
+     * @param to Address to mint tokens to.
+     * @param amount Amounts of tokens to mint.
+     * @param expectedPaymentToken ERC20 token address to accept payment in. address(0) indicates ETH.
+     * @param maxTotal Maximum amount of payment tokens.
+     * @param proof Merkle proof for allowlist minting.
+     * @notice Sale must be active for all tokens.
+     * @dev tokenIds must be sorted ascending without duplicates.
+     * @dev An empty proof is supplied when no proof is required.
+     */
 
     const calldata = encodeFunctionData({
       abi: SALES_CONTRACT_ABI,
       functionName: "mint",
       args: [
         userAddress,
-        [BigInt(tokenId)],
-        // Amount of nfts that are going to be purchased
         [BigInt(amount)],
-        toHex(0),
         currencyData.address,
-        // Here the exact price of the NFTs must be established (USDC = 6 decimals) (Native currency = 18 decimals)
         totalPrice,
         [toHex(0, { size: 32 })],
       ],
@@ -181,7 +173,7 @@ export const BuyWithCryptoCardButton = ({
     setTimeout(() => {
       refetchCollectionBalance();
       refetchTotalMinted();
-      refetchNftsMinted();
+      // refetchNftsMinted();
     }, 3000);
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [txnData, isPendingSendTxn]);

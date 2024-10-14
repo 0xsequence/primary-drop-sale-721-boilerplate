@@ -4,29 +4,22 @@ import {
   defaultChainId,
   salesConfigs as salesConfigurations,
 } from "../../salesConfigs";
-interface SaleItem {
-  tokenId: string;
-}
 
 export interface UnpackedSaleConfigurationProps {
   networkName: string;
   nftTokenAddress: Address;
   salesContractAddress: Address;
   chainId: number;
-  itemsForSale: SaleItem[];
 }
 
 const unpackedSalesConfigurations = salesConfigurations.map((item) => {
-  const { nftTokenAddress, salesContractAddress, chainId, itemsForSale } = item;
+  const { nftTokenAddress, salesContractAddress, chainId } = item;
   const chain = getChainConfig(chainId);
   return {
     networkName: chain.name,
     nftTokenAddress,
     salesContractAddress,
     chainId: chain.id,
-    itemsForSale: itemsForSale.map((id) => {
-      return { tokenId: id };
-    }),
   };
 }) as UnpackedSaleConfigurationProps[];
 
